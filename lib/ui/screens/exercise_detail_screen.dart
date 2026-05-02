@@ -102,8 +102,10 @@ class ExerciseDetailScreen extends StatelessWidget {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _MetaChip(label: exercise.bodyPart),
-                          _MetaChip(label: exercise.target),
+                          if (exercise.bodyPart.isNotEmpty)
+                            _MetaChip(label: exercise.bodyPart),
+                          if (exercise.target.isNotEmpty)
+                            _MetaChip(label: exercise.target),
                         ],
                       ),
                     ],
@@ -138,7 +140,11 @@ class ExerciseDetailScreen extends StatelessWidget {
                         primary: true,
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const CameraScreen(),
+                            builder: (_) => CameraScreen(
+                              exerciseName: exercise.name,
+                              bodyPart: exercise.bodyPart,
+                              exerciseId: exercise.id,
+                            ),
                           ),
                         ),
                       ),

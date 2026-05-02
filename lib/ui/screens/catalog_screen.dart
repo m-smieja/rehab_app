@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hive/hive.dart';
 import 'package:rehab_app/data/models/exercise.dart';
 import 'package:rehab_app/data/services/api_service.dart';
 import 'package:rehab_app/ui/screens/exercise_detail_screen.dart';
@@ -27,6 +29,121 @@ class _CatalogScreenState extends State<CatalogScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showWeightDialog(BuildContext context) async {
+    final box = Hive.box('settings');
+    final current =
+        (box.get('weight', defaultValue: 70.0) as num).toDouble();
+    final controller =
+        TextEditingController(text: current.toStringAsFixed(0));
+    String? error;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF140D2E),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            'Your Weight',
+            style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700, color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Used to calculate calories burned.',
+                style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.5)),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: false),
+                style: GoogleFonts.inter(color: Colors.white),
+                onChanged: (_) {
+                  final val = int.tryParse(controller.text);
+                  setDialogState(() {
+                    error = (val == null || val < 20 || val > 300)
+                        ? 'Enter a value between 20 and 300'
+                        : null;
+                  });
+                },
+                decoration: InputDecoration(
+                  suffixText: 'kg',
+                  suffixStyle: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.5)),
+                  errorText: error,
+                  errorStyle: const TextStyle(
+                      color: Colors.redAccent, fontSize: 11),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.12)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF7C5CFF)),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Colors.redAccent),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Colors.redAccent),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel',
+                  style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.5))),
+            ),
+            ElevatedButton(
+              onPressed: error != null
+                  ? null
+                  : () {
+                      final val = int.tryParse(controller.text);
+                      if (val != null && val >= 20 && val <= 300) {
+                        box.put('weight', val.toDouble());
+                      }
+                      Navigator.pop(ctx);
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7C5CFF),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor:
+                    const Color(0xFF7C5CFF).withValues(alpha: 0.3),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text('Save',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    controller.dispose();
   }
 
   List<Exercise> _filter(List<Exercise> all) {
@@ -59,10 +176,26 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'DIGITAL REHAB',
-                      textAlign: TextAlign.center,
-                      style: textTheme.displayLarge?.copyWith(fontSize: 44),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          'DIGITAL REHAB',
+                          textAlign: TextAlign.center,
+                          style:
+                              textTheme.displayLarge?.copyWith(fontSize: 44),
+                        ),
+                        Positioned(
+                          right: 0,
+                          child: IconButton(
+                            tooltip: 'Settings',
+                            icon: const Icon(Icons.settings_rounded),
+                            color: Colors.white.withValues(alpha: 0.6),
+                            onPressed: () =>
+                                _showWeightDialog(context),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
                     _SearchField(
