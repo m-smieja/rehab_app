@@ -7,7 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
+import 'package:hive/hive.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:rehab_app/data/models/workout_session.dart';
+import 'package:rehab_app/ui/screens/session_summary_screen.dart';
 import 'package:rehab_app/ui/widgets/pose_painter.dart';
 import 'package:rehab_app/vision/push_up_counter.dart';
 import 'package:rehab_app/vision/vision_engine.dart';
@@ -20,7 +23,16 @@ const _deviceOrientationDegrees = {
 };
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key});
+  final String exerciseName;
+  final String bodyPart;
+  final String exerciseId;
+
+  const CameraScreen({
+    super.key,
+    required this.exerciseName,
+    required this.bodyPart,
+    required this.exerciseId,
+  });
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -44,9 +56,13 @@ class _CameraScreenState extends State<CameraScreen>
   Size _latestImageSize = Size.zero;
   InputImageRotation _latestRotation = InputImageRotation.rotation0deg;
 
+  late final DateTime _sessionStartTime;
+  bool _sessionFinished = false;
+
   @override
   void initState() {
     super.initState();
+    _sessionStartTime = DateTime.now();
     WidgetsBinding.instance.addObserver(this);
     _bootstrap();
   }
@@ -246,50 +262,125 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
+  double _metForBodyPart(String bodyPart) {
+    switch (bodyPart.toLowerCase().trim()) {
+      case 'chest':
+      case 'back':
+      case 'shoulders':
+        return 3.8;
+      case 'legs':
+      case 'waist':
+        return 5.0;
+      case 'upper arms':
+      case 'lower arms':
+      case 'cardio':
+        return 4.0;
+      default:
+        return 3.5;
+    }
+  }
+
+  Future<void> _finishSession() async {
+    if (_sessionFinished) return;
+    _sessionFinished = true;
+
+    final reps = _pushUpCounter.repCount.value;
+    final durationSeconds =
+        DateTime.now().difference(_sessionStartTime).inSeconds;
+
+    final settingsBox = Hive.box('settings');
+    final weight =
+        (settingsBox.get('weight', defaultValue: 70.0) as num).toDouble();
+    final calories =
+        _metForBodyPart(widget.bodyPart) * weight * (durationSeconds / 3600);
+
+    final box = Hive.box<WorkoutSession>('workout_sessions');
+    await box.add(WorkoutSession(
+      exerciseName: widget.exerciseName,
+      repCount: reps,
+      durationSeconds: durationSeconds,
+      date: DateTime.now(),
+      bodyPart: widget.bodyPart,
+      calories: calories,
+      exerciseId: widget.exerciseId,
+    ));
+
+    if (!mounted) return;
+    await Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => SessionSummaryScreen(
+          exerciseName: widget.exerciseName,
+          repCount: reps,
+          durationSeconds: durationSeconds,
+          bodyPart: widget.bodyPart,
+          calories: calories,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final canFlip = _cameras.length >= 2 && _errorMessage == null;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF05050A),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildCameraLayer(),
-          if (_controller != null && _errorMessage == null)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: _RepCounterOverlay(repCount: _pushUpCounter.repCount),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _finishSession();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF05050A),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildCameraLayer(),
+            if (_controller != null && _errorMessage == null)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 16,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _RepCounterOverlay(repCount: _pushUpCounter.repCount),
+                ),
               ),
-            ),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 12,
-            left: 16,
-            child: _GlassCircleButton(
-              icon: Icons.arrow_back_rounded,
-              onTap: () => Navigator.of(context).pop(),
-            ),
-          ),
-          if (canFlip)
             Positioned(
               top: MediaQuery.of(context).padding.top + 12,
-              right: 16,
+              left: 16,
               child: _GlassCircleButton(
-                icon: Icons.flip_camera_ios_rounded,
-                onTap: _flipCamera,
+                icon: Icons.arrow_back_rounded,
+                onTap: _finishSession,
               ),
             ),
-          if (_controller != null && _errorMessage == null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-              child: _DebugHud(textListenable: _pushUpCounter.debugNotifier),
-            ),
-        ],
+            if (canFlip)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 12,
+                right: 16,
+                child: _GlassCircleButton(
+                  icon: Icons.flip_camera_ios_rounded,
+                  onTap: _flipCamera,
+                ),
+              ),
+            if (_controller != null && _errorMessage == null)
+              Positioned(
+                bottom: MediaQuery.of(context).padding.bottom + 104,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _ManualRepButton(
+                    onTap: () => _pushUpCounter.repCount.value =
+                        _pushUpCounter.repCount.value + 1,
+                  ),
+                ),
+              ),
+            if (_controller != null && _errorMessage == null)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).padding.bottom + 16,
+                child: _DebugHud(textListenable: _pushUpCounter.debugNotifier),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -446,6 +537,53 @@ class _DebugHud extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ManualRepButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ManualRepButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 28, vertical: 13),
+            decoration: BoxDecoration(
+              color: const Color(0xFF7C5CFF).withValues(alpha: 0.28),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: const Color(0xFF7C5CFF).withValues(alpha: 0.55),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  'REP',
+                  style: GoogleFonts.bebasNeue(
+                    fontSize: 24,
+                    color: Colors.white,
+                    letterSpacing: 2,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
