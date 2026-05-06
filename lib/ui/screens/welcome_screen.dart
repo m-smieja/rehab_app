@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rehab_app/ui/screens/catalog_screen.dart';
+import 'login_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -39,7 +40,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const CatalogScreen()),
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
         ),
         child: Container(
           decoration: const BoxDecoration(
