@@ -1,0 +1,24 @@
+# ── Root-level Flutter build artifacts ────────────────────────────
+# (generated outside frontend/ when running flutter from repo root)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# ── Platform directories generated at repo root ───────────────────
+# The real platform folders live inside frontend/ — these are leftovers
+/android/
+/ios/
+/linux/
+/macos/
+/windows/
+
+# ── IntelliJ / Android Studio ─────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# ── OS ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rehab_app/ui/screens/coach/coach_main_screen.dart';
 import 'package:rehab_app/ui/screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,10 +25,12 @@ class _LoginScreenState extends State<LoginScreen> {
     // TODO: dodanie logiki sprawdzania poprawnosci danych
     print('Logowanie: $email, Rola: $_selectedRole');
 
-    // Po udanym logowaniu przechodzimy do glownego ekranu aplikacji
+    final Widget destination = _selectedRole == 'Trener/Fizjoterapeuta'
+        ? const CoachMainScreen()
+        : const HomeScreen();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      MaterialPageRoute(builder: (context) => destination),
     );
   }
 
