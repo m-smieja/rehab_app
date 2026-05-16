@@ -25,5 +25,9 @@ public class Users {
     private String password;
 
     @Column(name = "role", nullable = false)
-    private String role;
+    private String role;  //rola KLIENT, TRENER
+
+    @ManyToOne
+    @JoinColumn(name = "trainer_id")
+    private Users trainer; // Jeśli użytkownik to KLIENT, tu zapisujemy jego TRENERA. Jeśli to TRENER, to pole jest nullem.
 }

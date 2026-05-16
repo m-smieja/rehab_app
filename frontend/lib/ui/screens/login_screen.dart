@@ -15,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Zmienna przechowujaca wybrana role
   String _selectedRole = 'Klient';
-  final List<String> _roles = ['Klient', 'Trener/Fizjoterapeuta'];
+  final List<String> _roles = ['Klient', 'Trener'];
 
   void _handleLogin() {
     String email = _emailController.text;
