@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rehab_app/ui/screens/home_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -17,19 +19,58 @@ class _LoginScreenState extends State<LoginScreen> {
   String _selectedRole = 'Klient';
   final List<String> _roles = ['Klient', 'Trener'];
 
-  void _handleLogin() {
-    String email = _emailController.text;
-    String password = _passwordController.text;
-    
-    // TODO: dodanie logiki sprawdzania poprawnosci danych
-    print('Logowanie: $email, Rola: $_selectedRole');
+Future<void> _handleLogin() async {
+  String email = _emailController.text;
+  String password = _passwordController.text;
 
-    // Po udanym logowaniu przechodzimy do glownego ekranu aplikacji
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+  // Adres serwera Spring Boot (10.0.2.2 to odpowiednik localhost dla emulatora)
+  final url = Uri.parse('http://10.0.2.2:8080/api/users/login');
+
+  try {
+    // Wysyłamy zapytanie POST z danymi z formularza
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = jsonDecode(response.body);
+      print('Zalogowano! ID: ${responseData['id']}, Rola: ${responseData['role']}');
+
+      // Sukces -> Przenosimy na ekran główny
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    }
+    else if (response.statusCode == 403) {
+      // 403 z dokumentacji -> Błędne hasło
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Błędne hasło!')),
+      );
+    }
+    else if (response.statusCode == 400) {
+      // 400 z dokumentacji -> Konto nie istnieje
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Takie konto nie istnieje!')),
+      );
+    }
+    else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Nieznany błąd serwera: ${response.statusCode}')),
+      );
+    }
+  } catch (e) {
+    print('Błąd połączenia: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Brak połączenia z serwerem!')),
     );
   }
+}
 
   @override
   Widget build(BuildContext context) {
