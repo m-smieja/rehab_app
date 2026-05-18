@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rehab_app/ui/screens/catalog_screen.dart';
 import 'login_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
