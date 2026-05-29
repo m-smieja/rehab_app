@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rehab_app/ui/screens/home_screen.dart';
+import 'package:rehab_app/ui/screens/catalog_screen.dart';
 import 'package:rehab_app/ui/screens/main_shell.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -25,7 +25,10 @@ Future<void> _handleLogin() async {
   String password = _passwordController.text;
 
   // Adres serwera Spring Boot (10.0.2.2 to odpowiednik localhost dla emulatora)
-  final url = Uri.parse('http://10.0.2.2:8080/api/users/login');
+  //final url = Uri.parse('http://10.0.2.2:8080/api/users/login');
+
+  // Adres serwera Spring Boot w domowej sieci Wi-Fi
+  final url = Uri.parse('http://192.168.8.89:8080/api/users/login');
 
   try {
     // Wysyłamy zapytanie POST z danymi z formularza
