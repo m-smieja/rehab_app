@@ -17,6 +17,9 @@ build/
 *.ipr
 *.iws
 
+# Visual Studio
+.vs/
+
 # Dart/Flutter
 *.g.dart
 *.freezed.dart
