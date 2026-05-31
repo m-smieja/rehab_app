@@ -1,17 +1,16 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:rehab_app/config/app_config.dart';
 import 'package:rehab_app/data/models/exercise.dart';
 
 class ApiService {
-  static const String _host = 'exercisedb.p.rapidapi.com';
-  static const String _apiKey =
-      '7dc42d2980msh4c185a3f3e64321p136e50jsn354c952642c1';
+  static String get _host => AppConfig.rapidApiHost;
 
-  static const Map<String, String> authHeaders = {
-    'x-rapidapi-key': _apiKey,
-    'x-rapidapi-host': _host,
-  };
+  static Map<String, String> get authHeaders => {
+        'x-rapidapi-key': AppConfig.rapidApiKey,
+        'x-rapidapi-host': _host,
+      };
 
   static const Exercise pinnedPushUp = Exercise(
     id: '0662',

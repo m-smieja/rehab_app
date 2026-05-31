@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:rehab_app/data/models/exercise.dart';
 import 'package:rehab_app/data/services/api_service.dart';
 import 'package:rehab_app/ui/screens/exercise_detail_screen.dart';
+import 'package:rehab_app/ui/screens/welcome_screen.dart';
 import 'package:rehab_app/ui/widgets/glass_card.dart';
 
 class CatalogScreen extends StatefulWidget {
@@ -32,7 +34,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   Future<void> _showWeightDialog(BuildContext context) async {
-    final box = Hive.box('settings');
+    final box = Hive.isBoxOpen('settings')
+        ? Hive.box('settings')
+        : await Hive.openBox('settings');
+    if (!context.mounted) return;
     final current =
         (box.get('weight', defaultValue: 70.0) as num).toDouble();
     final controller =
@@ -51,64 +56,66 @@ class _CatalogScreenState extends State<CatalogScreen> {
             style: GoogleFonts.inter(
                 fontWeight: FontWeight.w700, color: Colors.white),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Used to calculate calories burned.',
-                style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.5)),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: false),
-                style: GoogleFonts.inter(color: Colors.white),
-                onChanged: (_) {
-                  final val = int.tryParse(controller.text);
-                  setDialogState(() {
-                    error = (val == null || val < 20 || val > 300)
-                        ? 'Enter a value between 20 and 300'
-                        : null;
-                  });
-                },
-                decoration: InputDecoration(
-                  suffixText: 'kg',
-                  suffixStyle: GoogleFonts.inter(
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Used to calculate calories burned.',
+                  style: GoogleFonts.inter(
+                      fontSize: 13,
                       color: Colors.white.withValues(alpha: 0.5)),
-                  errorText: error,
-                  errorStyle: const TextStyle(
-                      color: Colors.redAccent, fontSize: 11),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.12)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF7C5CFF)),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Colors.redAccent),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Colors.redAccent),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: false),
+                  style: GoogleFonts.inter(color: Colors.white),
+                  onChanged: (_) {
+                    final val = int.tryParse(controller.text);
+                    setDialogState(() {
+                      error = (val == null || val < 20 || val > 300)
+                          ? 'Enter a value between 20 and 300'
+                          : null;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    suffixText: 'kg',
+                    suffixStyle: GoogleFonts.inter(
+                        color: Colors.white.withValues(alpha: 0.5)),
+                    errorText: error,
+                    errorStyle: const TextStyle(
+                        color: Colors.redAccent, fontSize: 11),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.05),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.12)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: Color(0xFF7C5CFF)),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: Colors.redAccent),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: Colors.redAccent),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -176,24 +183,34 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Stack(
-                      alignment: Alignment.center,
+                    Row(
                       children: [
-                        Text(
-                          'DIGITAL REHAB',
-                          textAlign: TextAlign.center,
-                          style:
-                              textTheme.displayLarge?.copyWith(fontSize: 44),
+                        IconButton(
+                          tooltip: 'Wyloguj',
+                          icon: const Icon(Icons.logout_rounded),
+                          color: Colors.white.withValues(alpha: 0.6),
+                          onPressed: () {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (_) => const WelcomeScreen(),
+                              ),
+                              (_) => false,
+                            );
+                          },
                         ),
-                        Positioned(
-                          right: 0,
-                          child: IconButton(
-                            tooltip: 'Settings',
-                            icon: const Icon(Icons.settings_rounded),
-                            color: Colors.white.withValues(alpha: 0.6),
-                            onPressed: () =>
-                                _showWeightDialog(context),
+                        Expanded(
+                          child: Text(
+                            'DIGITAL REHAB',
+                            textAlign: TextAlign.center,
+                            style:
+                                textTheme.displayLarge?.copyWith(fontSize: 36),
                           ),
+                        ),
+                        IconButton(
+                          tooltip: 'Ustawienia',
+                          icon: const Icon(Icons.settings_rounded),
+                          color: Colors.white.withValues(alpha: 0.6),
+                          onPressed: () => _showWeightDialog(context),
                         ),
                       ],
                     ),

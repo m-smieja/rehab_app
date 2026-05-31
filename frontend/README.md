@@ -1,39 +1,72 @@
-1. Cel Projektu
+# Digital Rehab — Frontend (Flutter)
 
-Stworzenie natywnej, inteligentnej aplikacji mobilnej do rehabilitacji domowej. Aplikacja ma nie tylko służyć jako nowoczesny katalog ćwiczeń, ale przede wszystkim pełnić rolę osobistego asystenta AI, który na żywo śledzi ruchy użytkownika (Computer Vision) i automatycznie zlicza poprawnie wykonane powtórzenia.
+Aplikacja mobilna do rehabilitacji z detekcją pozy opartą na ML Kit.
 
-    Motyw przewodni: Dark Modern / Glassmorphism.
+## Konfiguracja
 
-    Kolorystyka tła: Głęboka czerń przechodząca w ciemny fiolet i granat (RadialGradient).
+Przed uruchomieniem skopiuj i uzupełnij plik konfiguracyjny:
 
-    Komponenty (GlassCard): Półprzezroczyste karty z minimalnym rozmyciem i subtelną, jasną ramką (efekt matowego szkła).
+```bash
+cp lib/config/app_config.example.dart lib/config/app_config.dart
+```
 
-    Typografia: Potężne, czytelne i nowoczesne białe nagłówki (np. "DIGITAL REHAB").
+Ustaw w `app_config.dart`:
+- `backendUrl` — adres IP maszyny z backendem
+- `rapidApiKey` — klucz z [rapidapi.com/exercisedb](https://rapidapi.com/justin-tooke/api/exercisedb)
 
-Główne Moduły i Mechanika
-Moduł 1: Dynamiczny Katalog Ćwiczeń
+## Uruchomienie
 
-    Pobieranie danych z ExerciseDB 
+```bash
+flutter pub get
+flutter run
+```
 
-    Wyświetlanie animacji ćwiczeń (GIF).
+## Architektura
 
-    Zasada krytyczna: Każde zapytanie o obraz musi zawierać dynamicznie doklejane ID oraz autoryzację w nagłówkach HTTP (klucz x-rapidapi-key i host), w przeciwnym razie serwer odrzuci połączenie.
+```
+lib/
+├── config/
+│   ├── app_config.dart         # Gitignorowany — uzupełnij własne dane
+│   └── app_config.example.dart # Szablon konfiguracji
+├── core/
+│   └── theme.dart              # Motyw Dark/Glassmorphism
+├── data/
+│   ├── models/                 # Exercise, WorkoutSession
+│   └── services/
+│       └── api_service.dart    # ExerciseDB (RapidAPI)
+├── ui/
+│   ├── screens/
+│   │   ├── welcome_screen.dart
+│   │   ├── login_screen.dart
+│   │   ├── main_shell.dart        # Shell klienta
+│   │   ├── catalog_screen.dart    # Katalog ćwiczeń
+│   │   ├── exercise_detail_screen.dart
+│   │   ├── workout_history_screen.dart
+│   │   ├── session_summary_screen.dart
+│   │   ├── session_detail_screen.dart
+│   │   ├── camera_screen.dart     # AI tracker
+│   │   └── coach/                 # Panel trenera
+│   │       ├── coach_main_screen.dart
+│   │       ├── patient_list_screen.dart
+│   │       ├── patient_detail_screen.dart
+│   │       ├── plan_editor_screen.dart
+│   │       └── video_review_screen.dart
+│   └── widgets/
+│       ├── glass_card.dart
+│       ├── muscle_map.dart
+│       └── pose_painter.dart
+└── vision/
+    ├── vision_engine.dart      # ML Kit pose detection
+    └── push_up_counter.dart    # Logika liczenia powtórzeń
+```
 
-Moduł 2: Asystent Ruchu AI (Pose Detection)
+## Detekcja pozy
 
-    Uruchomienie podglądu z przedniej kamery w czasie rzeczywistym.
+Kąt stawu obliczany ze wzoru:
+```
+angle = atan2(C.y - B.y, C.x - B.x) - atan2(A.y - B.y, A.x - B.x)
+```
 
-    Rozpoznawanie punktów kluczowych ciała (szkielet) klatka po klatce przez Google ML Kit.
-
-Moduł 3: Logika Liczenia Powtórzeń 
-
-Silnik matematyczny obliczający na bieżąco kąt zgięcia w stawie.
-
-    Punkty odniesienia: Ramię (P1​), Łokieć (P2​), Nadgarstek (P3​).
-
-    Kąt (θ): Mierzony z użyciem twierdzenia cosinusów lub wektorów 2D/3D zebranych z kamery:
-    θ=arccos(∣a∣⋅∣b∣a⋅b​)
-
-    Stany licznika: * Faza zejścia: θ<90∘ (uruchamia flagę "w dół").
-
-        Faza wyprostu: θ>160∘ i aktywna flaga (zalicza 1 powtórzenie, resetuje flagę).
+Automat stanów pompki:
+- Faza dół: kąt łokcia < 90°
+- Pełne wyprostowanie: kąt > 160° → zlicz powtórzenie
