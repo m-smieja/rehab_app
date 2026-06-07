@@ -1,0 +1,896 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- XeLaTeX + polskie znaki przez fontspec ---
+\usepackage{fontspec}
+\setmainfont{DejaVu Serif}
+\setmonofont{DejaVu Sans Mono}
+\usepackage{polyglossia}
+\setdefaultlanguage{polish}
+
+\usepackage{dirtree}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{parskip}
+\usepackage{microtype}
+
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+% --- Nagłówki i stopki ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Digital Rehab App --- Dokumentacja Techniczna}
+\fancyhead[R]{\small v1.0.0}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{14.5pt}
+
+% --- Styl kodu ---
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  breaklines=true,
+  keywordstyle=\color{blue!70},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red!60},
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  tabsize=2,
+  literate=
+    {ą}{{\k{a}}}1 {Ą}{{\k{A}}}1
+    {ę}{{\k{e}}}1 {Ę}{{\k{E}}}1
+    {ó}{{\'o}}1  {Ó}{{\'O}}1
+    {ś}{{\'s}}1  {Ś}{{\'S}}1
+    {ł}{{\l{}}}1 {Ł}{{\L{}}}1
+    {ż}{{\.z}}1  {Ż}{{\.Z}}1
+    {ź}{{\'z}}1  {Ź}{{\'Z}}1
+    {ć}{{\'c}}1  {Ć}{{\'C}}1
+    {ń}{{\'n}}1  {Ń}{{\'N}}1
+}
+
+% --- Linki ---
+\hypersetup{colorlinks=true, linkcolor=blue!60!black, urlcolor=blue!60!black}
+
+\titlespacing*{\section}{0pt}{1.5em}{0.8em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.5em}
+\titlespacing*{\subsubsection}{0pt}{1em}{0.4em}
+
+% ============================================================
+\begin{document}
+% --- Strona tytułowa ---
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries Digital Rehab App\\[0.4em]}
+  {\Large Dokumentacja Techniczna Systemu}
+  \vspace{1.5cm}
+
+  \rule{\linewidth}{0.5pt}
+  \vspace{0.8cm}
+
+  {\large\bfseries Autorzy}\\[0.6em]
+  \begin{tabular}{c}
+    Bartek Czyż,
+    Piotr Kotuła, 
+    Michał Patronik,
+    Miłosz Śmieja 
+  \end{tabular}
+
+  \vspace{0.8cm}
+  \rule{\linewidth}{0.5pt}
+  \vspace{0.5cm}
+
+  \begin{tabular}{ll}
+    \textbf{Wersja dokumentu:}   & 1.0.0 \\[4pt]
+    \textbf{Wersja aplikacji:}   & 1.0.0+1 \\[4pt]
+    \textbf{Data wydania:}       & czerwiec 2026 \\[4pt]
+    \textbf{Język dokumentacji:} & polski \\[4pt]
+    \textbf{Forma:}              & elektroniczna (PDF) \\
+  \end{tabular}
+
+  \vspace{1cm}
+  \rule{\linewidth}{0.5pt}
+  \vspace{1cm}
+
+  {\large\bfseries Projekt Zespołowy --- PWr}\\[0.6em]
+  {\large Politechnika Wrocławska}\\
+  {\large Wydział Informatyki i Telekomunikacji}
+
+  \vspace{2cm}
+  \begin{tabular}{ll}
+    \textbf{Typ dokumentu:} & Dokumentacja powykonawcza \\[4pt]
+    \textbf{Status:}        & Wersja deweloperska \\
+  \end{tabular}
+
+  \vfill
+  {\small Dokumentacja sporządzona zgodnie z wymaganiami dot.\ dokumentacji\\
+  systemów informatycznych (Zał.\ nr 1.1 do SIWZ oraz Zał.\ nr 6 do Umowy)}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Informacje ogólne}
+
+\subsection{Cel dokumentu}
+
+Niniejszy dokument stanowi kompletną dokumentację techniczną systemu \textbf{Digital Rehab App} --- aplikacji mobilnej wspomagającej rehabilitację i ćwiczenia fizyczne. Dokumentacja obejmuje opis architektury systemu, instrukcje instalacji i konfiguracji, opis funkcjonalności, procedury eksploatacyjne oraz informacje o licencjonowaniu komponentów.
+
+Dokument przeznaczony jest dla:
+\begin{itemize}
+  \item administratorów systemu odpowiedzialnych za instalację i utrzymanie,
+  \item użytkowników końcowych (klientów i trenerów/fizjoterapeutów),
+  \item programistów rozwijających lub integrujących system z innymi rozwiązaniami.
+\end{itemize}
+
+\subsection{Zakres systemu}
+
+Digital Rehab App jest systemem dwuwarstwowym składającym się z:
+\begin{itemize}
+  \item \textbf{Aplikacji mobilnej} (frontend) --- zbudowanej w technologii Flutter, uruchamianej na urządzeniach z systemem Android (API~24+),
+  \item \textbf{Serwera REST API} (backend) --- zbudowanego w technologii Spring Boot, komunikującego się z relacyjną bazą danych MySQL.
+\end{itemize}
+
+System umożliwia pacjentom samodzielne wykonywanie ćwiczeń rehabilitacyjnych z detekcją ruchu opartą na uczeniu maszynowym (Google ML~Kit), a trenerom/fizjoterapeutom --- monitorowanie postępów swoich podopiecznych.
+
+\subsection{Wersjonowanie dokumentacji}
+
+\begin{center}
+\begin{tabular}{cccp{5.5cm}}
+  \toprule
+  \textbf{Nr wersji} & \textbf{Data} & \textbf{Autor} & \textbf{Opis zmian} \\
+  \midrule
+  1.0.0 & 2026-06 & Zespół projektowy & Pierwsza wersja dokumentacji końcowej \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{Architektura systemu}
+
+\subsection{Architektura ogólna}
+
+System Digital Rehab App oparty jest na architekturze \textbf{klient--serwer} z podziałem na trzy warstwy:
+\begin{enumerate}
+  \item \textbf{Warstwa prezentacji} --- aplikacja Flutter na urządzeniu mobilnym użytkownika,
+  \item \textbf{Warstwa logiki biznesowej} --- serwer Spring Boot eksponujący REST API,
+  \item \textbf{Warstwa danych} --- relacyjna baza danych MySQL.
+\end{enumerate}
+
+Komunikacja między klientem a serwerem odbywa się poprzez protokół HTTP z wymianą danych w formacie JSON. Dane dotyczące historii treningów przechowywane są lokalnie na urządzeniu mobilnym w bazie Hive (NoSQL, offline-first) --- synchronizacja z backendem jest planowana w kolejnej wersji systemu.
+
+\subsection{Schemat blokowy systemu}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|c|}
+\hline
+\textbf{Urządzenie mobilne (Android)} \\
+Flutter 3.41+ / Dart 3.11+ \\
+\hline
+$\downarrow\uparrow$ \ HTTP REST (JSON) \ $\downarrow\uparrow$ \\
+\hline
+\textbf{Serwer aplikacji} \\
+Spring Boot 4.0.6 / Java 21 \ -- \ \texttt{localhost:8080} \\
+\hline
+$\downarrow\uparrow$ \ JDBC / JPA (Hibernate) \ $\downarrow\uparrow$ \\
+\hline
+\textbf{Baza danych MySQL 8} \\
+\texttt{localhost:3306 / rehab\_db} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Komponenty frontendu (Flutter)}
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+  \toprule
+  \textbf{Komponent} & \textbf{Opis} \\
+  \midrule
+  \texttt{lib/config/}        & Konfiguracja URL backendu i kluczy API \\
+  \texttt{lib/core/}          & Motyw graficzny aplikacji \\
+  \texttt{lib/data/models/}   & Modele danych (Exercise, WorkoutSession) \\
+  \texttt{lib/data/services/} & Warstwa serwisów REST (ApiService) \\
+  \texttt{lib/ui/screens/}    & Ekrany panelu klienta i trenera \\
+  \texttt{lib/ui/widgets/}    & Wielokrotnie używane komponenty UI \\
+  \texttt{lib/vision/}        & Silnik detekcji pozy (ML Kit + licznik powtórzeń) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Komponenty backendu (Spring Boot)}
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+  \toprule
+  \textbf{Komponent} & \textbf{Opis} \\
+  \midrule
+  \texttt{controllers/}    & Warstwa REST: UsersController, ExercisesController \\
+  \texttt{entities/}       & Encje JPA: Users, Exercises, ExercisesHistory \\
+  \texttt{repositories/}   & Interfejsy Spring Data JPA \\
+  \texttt{DataInitializer} & Inicjalizacja bazy przykładowymi danymi \\
+  \texttt{application.properties} & Konfiguracja połączenia z bazą danych \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{Wymagania systemowe}
+
+\subsection{Wymagania serwera (backend)}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Komponent} & \textbf{Wersja minimalna} & \textbf{Rekomendowana} \\
+  \midrule
+  Java (JDK)  & 17     & 21 (LTS) \\
+  Maven       & 3.6    & 3.9+ \\
+  MySQL       & 8.0    & 8.0 \\
+  Docker      & dowolna aktualna & dowolna aktualna \\
+  RAM         & 512 MB & 1 GB \\
+  Dysk        & 500 MB & 1 GB \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Wymagania urządzenia mobilnego (frontend)}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Komponent} & \textbf{Wymaganie} & \textbf{Uwagi} \\
+  \midrule
+  System operacyjny & Android API 24 (7.0+) & Wymagane do ML Kit \\
+  Flutter SDK       & 3.41+                 & Do kompilacji \\
+  Dart SDK          & 3.11+                 & Do kompilacji \\
+  Kamera            & Wymagana              & Detekcja pozy \\
+  RAM               & min. 2 GB             & 3 GB rekomendowane \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\newpage
+\section{Instalacja i konfiguracja}
+
+\subsection{Baza danych MySQL}
+
+Zalecanym sposobem uruchomienia bazy danych jest kontener Docker. Poniższe polecenie tworzy instancję MySQL~8:
+
+\begin{lstlisting}[language=bash, caption={Pierwsze uruchomienie bazy danych (Docker)}]
+docker run -d \
+  --name rehab_mysql \
+  -e MYSQL_ALLOW_EMPTY_PASSWORD=yes \
+  -e MYSQL_DATABASE=rehab_db \
+  -p 3306:3306 \
+  mysql:8
+\end{lstlisting}
+
+Przy kolejnych uruchomieniach (kontener już istnieje):
+\begin{lstlisting}[language=bash, caption={Ponowne uruchomienie kontenera}]
+docker start rehab_mysql
+\end{lstlisting}
+
+Alternatywnie, przy lokalnej instalacji MySQL bez Dockera:
+\begin{lstlisting}[language=bash, caption={Konfiguracja bez Dockera}]
+sudo systemctl start mysql
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS rehab_db;"
+\end{lstlisting}
+
+\subsection{Konfiguracja backendu}
+
+Parametry połączenia z bazą danych znajdują się w pliku \texttt{backend/src/main/resources/application.properties}:
+
+\begin{lstlisting}[caption={Domyślna konfiguracja application.properties}]
+spring.application.name=aplikacja_wspomagajaca_cwiczenia
+spring.datasource.url=jdbc:mysql://localhost:3306/rehab_db
+spring.datasource.username=root
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+\end{lstlisting}
+
+Przy wdrożeniu na innym hoście należy zmienić wartość \texttt{spring.datasource.url} oraz uzupełnić dane uwierzytelniające.
+
+\subsection{Uruchomienie backendu}
+
+\begin{lstlisting}[language=bash, caption={Uruchomienie serwera Spring Boot}]
+cd backend
+chmod +x mvnw
+./mvnw spring-boot:run
+\end{lstlisting}
+
+Serwer startuje na porcie \texttt{8080}. Przy pierwszym uruchomieniu \texttt{DataInitializer} automatycznie tworzy schemat bazy (Hibernate DDL) i wypełnia ją danymi demonstracyjnymi.
+
+\subsection{Konfiguracja i uruchomienie frontendu}
+
+Przed kompilacją należy skopiować i uzupełnić plik konfiguracyjny:
+\begin{lstlisting}[language=bash, caption={Konfiguracja pliku app\_config.dart}]
+cp frontend/lib/config/app_config.example.dart \
+   frontend/lib/config/app_config.dart
+\end{lstlisting}
+
+Następnie w \texttt{app\_config.dart} ustawić wartość \texttt{backendUrl}:
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Scenariusz} & \textbf{Wartość backendUrl} \\
+  \midrule
+  Emulator Android   & \texttt{http://10.0.2.2:8080} \\
+  Fizyczne urządzenie & \texttt{http://<IP\_MASZYNY>:8080} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+IP maszyny: \texttt{hostname -I | awk '\{print \$1\}'}.
+
+Dodatkowo należy uzupełnić \texttt{rapidApiKey} --- klucz generowany na \href{https://rapidapi.com/justin-tooke/api/exercisedb}{RapidAPI (ExerciseDB)}, wymagany do katalogu ćwiczeń.
+
+\begin{lstlisting}[language=bash, caption={Kompilacja i uruchomienie frontendu}]
+cd frontend
+flutter pub get
+flutter run
+# lub na konkretnym urządzeniu:
+flutter devices
+flutter run -d <ID_URZĄDZENIA>
+\end{lstlisting}
+
+% ============================================================
+\section{Schemat bazy danych}
+
+\subsection{Tabela \texttt{users}}
+
+\begin{center}
+\begin{tabular}{llll}
+  \toprule
+  \textbf{Kolumna} & \textbf{Typ} & \textbf{Ograniczenia} & \textbf{Opis} \\
+  \midrule
+  \texttt{id}          & BIGINT  & PK, AUTO\_INCREMENT     & Identyfikator użytkownika \\
+  \texttt{email}       & VARCHAR & UNIQUE, NOT NULL        & Adres e-mail (login) \\
+  \texttt{password}    & VARCHAR & NOT NULL                & Hasło (patrz sekcja \ref{sec:ograniczenia}) \\
+  \texttt{role}        & VARCHAR & NOT NULL                & \texttt{KLIENT} lub \texttt{TRENER} \\
+  \texttt{trainer\_id} & BIGINT  & FK $\rightarrow$ users(id) & ID trenera (nullable) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\newpage
+\subsection{Tabela \texttt{exercises}}
+
+\begin{center}
+\begin{tabular}{llll}
+  \toprule
+  \textbf{Kolumna} & \textbf{Typ} & \textbf{Ograniczenia} & \textbf{Opis} \\
+  \midrule
+  \texttt{id}          & BIGINT  & PK, AUTO\_INCREMENT & Identyfikator ćwiczenia \\
+  \texttt{name}        & VARCHAR & NOT NULL            & Nazwa ćwiczenia \\
+  \texttt{description} & VARCHAR & --                  & Opis i wskazówki wykonania \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Tabela \texttt{exercise\_history}}
+
+\begin{center}
+\begin{tabular}{llll}
+  \toprule
+  \textbf{Kolumna} & \textbf{Typ} & \textbf{Ograniczenia} & \textbf{Opis} \\
+  \midrule
+  \texttt{id}           & BIGINT   & PK, AUTO\_INCREMENT        & Identyfikator wpisu \\
+  \texttt{user\_id}     & BIGINT   & FK $\rightarrow$ users(id) & Kto ćwiczył \\
+  \texttt{exercise\_id} & BIGINT   & FK $\rightarrow$ exercises(id) & Jakie ćwiczenie \\
+  \texttt{repetitions}  & INT      & NOT NULL                   & Liczba powtórzeń \\
+  \texttt{accuracy}     & INT      & 0--100                     & Poprawność (\%) \\
+  \texttt{created\_at}  & DATETIME & DEFAULT NOW()              & Data i czas sesji \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Relacje między tabelami}
+
+\begin{itemize}
+  \item \texttt{users.trainer\_id} $\rightarrow$ \texttt{users.id} --- relacja wiele-do-jednego (klienci do trenera),
+  \item \texttt{exercise\_history.user\_id} $\rightarrow$ \texttt{users.id} --- historia przypisana do użytkownika,
+  \item \texttt{exercise\_history.exercise\_id} $\rightarrow$ \texttt{exercises.id} --- historia przypisana do ćwiczenia.
+\end{itemize}
+
+% ============================================================
+\section{Dokumentacja API}
+
+\subsection{Informacje ogólne}
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Parametr} & \textbf{Wartość} \\
+  \midrule
+  Protokół      & HTTP \\
+  Format danych & JSON \\
+  Port          & 8080 \\
+  Base URL      & \texttt{http://<HOST>:8080} \\
+  Autentykacja  & Brak (TODO: JWT) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+\subsection{Endpointy --- Użytkownicy}
+
+\subsubsection{Rejestracja nowego konta}
+
+\begin{lstlisting}[caption={POST /api/users/newAccount}]
+POST /api/users/newAccount
+Content-Type: application/json
+
+{
+  "email": "jan@example.com",
+  "password": "haslo123",
+  "role": "KLIENT",
+  "trainer": { "id": 1 }   // opcjonalne - ID trenera
+}
+\end{lstlisting}
+
+Odpowiedzi: \textbf{200~OK} (sukces, zwraca obiekt użytkownika), \textbf{400~Bad~Request} (niepoprawny email/hasło/rola lub nieistniejący trener), \textbf{409~Conflict} (email już zajęty).
+
+\subsubsection{Logowanie}
+
+\begin{lstlisting}[caption={POST /api/users/login}]
+POST /api/users/login
+Content-Type: application/json
+
+{ "email": "jan@example.com", "password": "haslo123" }
+\end{lstlisting}
+
+Odpowiedzi: \textbf{201~Created} (obiekt użytkownika z polem \texttt{role}), \textbf{400~Bad~Request} (brak emaila), \textbf{403~Forbidden} (błędne hasło).
+
+\subsubsection{Lista pacjentów trenera}
+\begin{lstlisting}[caption={GET /trainers/\{id\}/clients}]
+GET /trainers/{id}/clients
+\end{lstlisting}
+Zwraca listę użytkowników o roli \texttt{KLIENT} przypisanych do trenera.
+
+\subsubsection{Postępy pacjenta}
+\begin{lstlisting}[caption={GET /users/\{id\}/progress}]
+GET /users/{id}/progress
+\end{lstlisting}
+
+\subsection{Endpointy --- Ćwiczenia}
+
+\subsubsection{Lista ćwiczeń}
+\begin{lstlisting}[caption={GET /api/exercises}]
+GET /api/exercises
+\end{lstlisting}
+
+\subsubsection{Zapisanie wyniku treningu}
+\begin{lstlisting}[caption={POST /api/history}]
+POST /api/history
+Content-Type: application/json
+
+{
+  "user":     { "id": 2 },
+  "exercise": { "id": 1 },
+  "repetitions": 15,
+  "accuracy":    87
+}
+\end{lstlisting}
+
+\subsubsection{Historia ćwiczeń użytkownika}
+\begin{lstlisting}[caption={GET /users/\{id\}/history}]
+GET /users/{id}/history
+\end{lstlisting}
+
+% ============================================================
+\section{Dokumentacja użytkownika}
+
+\subsection{Uruchomienie i logowanie}
+
+Po uruchomieniu aplikacji wyświetlany jest ekran powitalny (\texttt{WelcomeScreen}), a następnie ekran logowania. Użytkownik podaje adres e-mail, hasło oraz wybiera rolę (Klient / Trener/Fizjoterapeuta). Po poprawnym zalogowaniu aplikacja przekierowuje do odpowiedniego panelu.
+
+\textbf{Dane demonstracyjne dostępne po instalacji:}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Rola} & \textbf{E-mail} & \textbf{Hasło} \\
+  \midrule
+  Trener        & \texttt{trener@test.com}            & \texttt{trener123} \\
+  Klient        & \texttt{klient@test.com}            & \texttt{klient123} \\
+  Pacjent demo  & \texttt{marek.kowalski@demo.pl}     & \texttt{demo1234} \\
+  Pacjent demo  & \texttt{anna.nowak@demo.pl}         & \texttt{demo1234} \\
+  Pacjent demo  & \texttt{piotr.wisniewski@demo.pl}   & \texttt{demo1234} \\
+  Pacjent demo  & \texttt{katarzyna.wojcik@demo.pl}   & \texttt{demo1234} \\
+  Pacjent demo  & \texttt{tomasz.lewandowski@demo.pl} & \texttt{demo1234} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Panel klienta}
+
+\begin{itemize}
+  \item \textbf{Katalog ćwiczeń} (\texttt{CatalogScreen}) --- przeglądanie listy ćwiczeń z zewnętrznego API ExerciseDB oraz bazy lokalnej, filtrowanie po partii mięśniowej.
+  \item \textbf{Szczegóły ćwiczenia} (\texttt{ExerciseDetailScreen}) --- opis, wskazówki techniczne, przycisk rozpoczęcia sesji z kamerą.
+  \item \textbf{Sesja treningowa z kamerą} (\texttt{CameraScreen}) --- kamera analizuje ułożenie ciała w czasie rzeczywistym przy użyciu Google ML~Kit Pose Detection. Silnik \texttt{PushUpCounter} zlicza powtórzenia na podstawie kąta stawu łokciowego (próg fazy dolnej:~110°, górnej:~160°).
+  \item \textbf{Podsumowanie sesji} (\texttt{SessionSummaryScreen}) --- liczba powtórzeń i wskaźnik poprawności po zakończeniu treningu.
+  \item \textbf{Historia treningów} (\texttt{WorkoutHistoryScreen}) --- lista minionych sesji z wykresami (fl\_chart). Dane przechowywane lokalnie (Hive).
+\end{itemize}
+
+\subsection{Panel trenera / fizjoterapeuty}
+
+\begin{itemize}
+  \item \textbf{Lista pacjentów} (\texttt{PatientListScreen}) --- przegląd podopiecznych ze statusem: aktywny / nieobecny / zgłoszony ból.
+  \item \textbf{Szczegóły pacjenta} (\texttt{PatientDetailScreen}) --- telemetria, plan ćwiczeń, historia sesji pacjenta.
+  \item \textbf{Edytor planu ćwiczeń} (\texttt{PlanEditorScreen}) --- tworzenie i modyfikowanie indywidualnych planów rehabilitacyjnych.
+  \item \textbf{Przegląd wideo} (\texttt{VideoReviewScreen}) --- \textit{w budowie} (planowane w kolejnej wersji).
+  \item \textbf{Wiadomości} --- \textit{w budowie} (planowane w kolejnej wersji).
+\end{itemize}
+
+% ============================================================
+\section{Licencjonowanie}
+
+\subsection{Oprogramowanie własne}
+
+Kod źródłowy aplikacji (frontend Flutter i backend Spring Boot) jest własnością zespołu projektowego. Nie jest objęty żadną publiczną licencją open-source --- wszelkie prawa zastrzeżone w zakresie projektu akademickiego.
+
+\subsection{Zależności zewnętrzne --- Backend}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Biblioteka} & \textbf{Wersja} & \textbf{Licencja} \\
+  \midrule
+  Spring Boot               & 4.0.6  & Apache 2.0 \\
+  Hibernate ORM             & 6.x    & LGPL 2.1 \\
+  MySQL Connector/J         & 8.x    & GPL 2.0 (FOSS exception) \\
+  Lombok                    & 1.18.x & MIT \\
+  Apache Commons Validator  & 1.10.1 & Apache 2.0 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Zależności zewnętrzne --- Frontend}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Pakiet} & \textbf{Wersja} & \textbf{Licencja} \\
+  \midrule
+  Flutter SDK                    & 3.41+  & BSD 3-Clause \\
+  google\_mlkit\_pose\_detection & 0.14.0 & BSD / Google \\
+  camera                         & 0.11.0 & BSD 3-Clause \\
+  hive / hive\_flutter           & 2.2.3  & Apache 2.0 \\
+  fl\_chart                      & 0.69.0 & MIT \\
+  http                           & 1.6.0  & BSD 3-Clause \\
+  google\_fonts                  & 6.2.1  & Apache 2.0 \\
+  permission\_handler            & 11.3.1 & MIT \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Zewnętrzne usługi / API}
+
+ExerciseDB (RapidAPI) --- zewnętrzne API katalogu ćwiczeń. Wymaga klucza API (\texttt{rapidApiKey}). Licencja komercyjna z planem darmowym (limit zapytań miesięcznie).
+
+% ============================================================
+\section{Procedury eksploatacyjne}
+
+\subsection{Kolejność uruchamiania komponentów}
+
+Kolejność jest istotna:
+\begin{enumerate}
+  \item Uruchomić kontener MySQL: \texttt{docker start rehab\_mysql}
+  \item Uruchomić backend: \texttt{./mvnw spring-boot:run} (katalog \texttt{backend/})
+  \item Uruchomić aplikację mobilną: \texttt{flutter run} (katalog \texttt{frontend/})
+\end{enumerate}
+
+\subsection{Zatrzymanie systemu}
+
+\begin{enumerate}
+  \item Zamknąć aplikację mobilną
+  \item Zatrzymać backend (\texttt{Ctrl+C})
+  \item Zatrzymać MySQL: \texttt{docker stop rehab\_mysql}
+\end{enumerate}
+
+\subsection{Procedura backup i odtworzenia bazy danych}
+
+Wykonanie kopii zapasowej:
+\begin{lstlisting}[language=bash, caption={Kopia zapasowa bazy danych}]
+docker exec rehab_mysql mysqldump -u root rehab_db \
+  > backup_$(date +%Y%m%d).sql
+\end{lstlisting}
+
+Odtworzenie z kopii:
+\begin{lstlisting}[language=bash, caption={Odtworzenie bazy z kopii zapasowej}]
+docker exec -i rehab_mysql mysql -u root rehab_db \
+  < backup_20260601.sql
+\end{lstlisting}
+
+Dane historii treningów przechowywane lokalnie na urządzeniu (Hive) można wyeksportować przez standardowy mechanizm kopii systemu Android (ADB backup).
+
+\subsection{Weryfikacja działania systemu}
+
+\begin{lstlisting}[language=bash, caption={Weryfikacja działania API}]
+# Pobranie listy cwiczen -- oczekiwana odpowiedz: tablica JSON
+curl http://localhost:8080/api/exercises
+\end{lstlisting}
+
+\subsection{Logi aplikacji}
+
+\begin{lstlisting}[language=bash, caption={Uruchomienie backendu z zapisem logów}]
+mkdir -p logs
+./mvnw spring-boot:run > logs/backend.log 2>&1 &
+\end{lstlisting}
+
+Logi Hibernate (DDL, SQL) dostępne na standardowym wyjściu konsoli serwera.
+
+\subsection{Resetowanie bazy danych do stanu początkowego}
+
+\begin{lstlisting}[language=bash, caption={Reset bazy danych}]
+docker stop rehab_mysql && docker rm rehab_mysql
+docker run -d --name rehab_mysql \
+  -e MYSQL_ALLOW_EMPTY_PASSWORD=yes \
+  -e MYSQL_DATABASE=rehab_db \
+  -p 3306:3306 mysql:8
+# DataInitializer zaladuje dane po uruchomieniu backendu
+./mvnw spring-boot:run
+\end{lstlisting}
+
+% ============================================================
+\section{Testy jednostkowe backendu}
+
+\subsection{Strategia testowania}
+
+Warstwa testów jednostkowych backendu opiera się na izolowanym testowaniu kontrolerów REST
+przy użyciu adnotacji \texttt{@WebMvcTest}. Podejście to uruchamia wyłącznie warstwę sieciową
+(serwlet, routowanie, serializację JSON) bez inicjalizacji bazy danych --- repozytoria
+zastępowane są atrapami za pomocą adnotacji \texttt{@MockitoBean}.
+
+Testy pisane są według stylu BDD (\textit{Behavior-Driven Development}): warunek wstępny
+konfigurowany przez \texttt{BDDMockito.given(\ldots).willReturn(\ldots)}, weryfikacja
+odpowiedzi przez \texttt{MockMvc} i asercje \texttt{jsonPath}.
+
+\subsection{Technologie i adnotacje}
+
+\begin{center}
+\begin{tabular}{lp{7.5cm}}
+  \toprule
+  \textbf{Technologia / adnotacja} & \textbf{Rola w testach} \\
+  \midrule
+  \texttt{@WebMvcTest(XyzController.class)} & Ładuje wyłącznie warstwę MVC wybranego kontrolera \\
+  \texttt{@MockitoBean}           & Rejestruje atrapę repozytorium w kontekście Springa \\
+  \texttt{MockMvc}                & Symuluje żądania HTTP bez uruchamiania serwera \\
+  \texttt{BDDMockito.given()}     & Konfiguruje zachowanie atrapy (styl BDD) \\
+  \texttt{jsonPath(\$.pole)}      & Weryfikuje pola w odpowiedzi JSON \\
+  JUnit~5 + \texttt{@DisplayName} & Czytelne nazwy testów po polsku \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Uwaga Spring Boot 4.x:} Adnotacja \texttt{@MockBean} (Spring Boot 3.x) została
+zastąpiona przez \texttt{@MockitoBean}
+(\texttt{org.springframework.test.context.bean.override.mockito}).
+Analogicznie \texttt{@WebMvcTest} pochodzi z nowego pakietu
+\texttt{org.springframework.boot.webmvc.test.autoconfigure}.
+
+\subsection{Uruchamianie testów}
+
+\begin{lstlisting}[language=bash, caption={Uruchomienie wszystkich testów jednostkowych}]
+cd backend
+./mvnw test
+\end{lstlisting}
+
+\begin{lstlisting}[language=bash, caption={Uruchomienie testów wybranego kontrolera}]
+./mvnw test -Dtest=UserControllerTest
+./mvnw test -Dtest=ExercisesControllerTest
+\end{lstlisting}
+
+Raporty XML i TXT zapisywane są do katalogu \texttt{backend/target/surefire-reports/}.
+
+\subsection{Pokryte scenariusze --- \texttt{UserControllerTest}}
+
+Klasa testuje endpointy \texttt{POST /api/users/newAccount},
+\texttt{POST /api/users/login} oraz \texttt{GET /trainers/\{id\}/clients}.
+
+\begin{center}
+\begin{longtable}{p{7.5cm}cc}
+  \toprule
+  \textbf{Scenariusz} & \textbf{Endpoint} & \textbf{Status} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{Scenariusz} & \textbf{Endpoint} & \textbf{Status} \\
+  \midrule
+  \endhead
+  Rejestracja TRENERA z poprawnymi danymi            & newAccount & 200 \\
+  Rejestracja KLIENTA z istniejącym trenerem         & newAccount & 200 \\
+  Rejestracja KLIENTA bez trenera                    & newAccount & 200 \\
+  Niepoprawny format adresu e-mail                   & newAccount & 400 \\
+  Hasło krótsze niż 6 znaków                         & newAccount & 400 \\
+  Zduplikowany adres e-mail                          & newAccount & 409 \\
+  Nieprawidłowa rola (np.\ ADMIN)                    & newAccount & 400 \\
+  Klient podaje ID nieistniejącego trenera            & newAccount & 400 \\
+  Klient podaje ID użytkownika bez roli TRENER       & newAccount & 400 \\
+  Logowanie z poprawnymi danymi                      & login      & 201 \\
+  Logowanie ze złym hasłem                           & login      & 403 \\
+  Logowanie z nieznanym adresem e-mail               & login      & 400 \\
+  Logowanie bez pola \texttt{email}                  & login      & 400 \\
+  Trener z przypisanymi klientami                    & clients    & 200 \\
+  Trener bez klientów --- pusta lista                & clients    & 200 \\
+  \bottomrule
+\end{longtable}
+\end{center}
+
+Odpowiedź logowania weryfikowana jest dodatkowo pod kątem obecności pól \texttt{id},
+\texttt{email}, \texttt{role} oraz \textbf{braku} pola \texttt{password} (sprawdzenie
+działania \texttt{@JsonProperty(WRITE\_ONLY)}).
+
+\subsection{Pokryte scenariusze --- \texttt{ExercisesControllerTest}}
+
+Klasa testuje endpointy \texttt{GET /api/exercises}, \texttt{POST /api/history}
+oraz \texttt{GET /users/\{id\}/history}.
+
+\begin{center}
+\begin{tabular}{p{7.5cm}cc}
+  \toprule
+  \textbf{Scenariusz} & \textbf{Endpoint} & \textbf{Status} \\
+  \midrule
+  Pobranie listy ćwiczeń (dane istnieją)          & GET /api/exercises      & 200 \\
+  Pobranie ćwiczeń gdy baza pusta                 & GET /api/exercises      & 200 \\
+  Dodanie wpisu historii z poprawnym body         & POST /api/history       & 201 \\
+  Pobranie historii ćwiczeń użytkownika           & GET /users/\{id\}/history & 200 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Wyniki}
+
+\begin{center}
+\begin{tabular}{lcc}
+  \toprule
+  \textbf{Klasa testowa} & \textbf{Liczba testów} & \textbf{Wynik} \\
+  \midrule
+  \texttt{UserControllerTest}      & 15 & \textcolor{green!60!black}{\textbf{PASS}} \\
+  \texttt{ExercisesControllerTest} &  4 & \textcolor{green!60!black}{\textbf{PASS}} \\
+  \midrule
+  \textbf{Łącznie} & \textbf{19} & \textbf{0 błędów, 0 pominięć} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{Bezpieczeństwo}
+
+\subsection{Zastosowane mechanizmy}
+
+\begin{itemize}
+  \item \textbf{Walidacja danych wejściowych} --- backend weryfikuje poprawność formatu adresu e-mail (Apache Commons Validator) oraz minimalną długość hasła (wyrażenie regularne \texttt{\textbackslash w\{6,\}}).
+  \item \textbf{Ochrona hasła w odpowiedziach API} --- pole \texttt{password} w encji \texttt{Users} oznaczone adnotacją \texttt{@JsonProperty(WRITE\_ONLY)}, co uniemożliwia jego zwrot w odpowiedziach GET.
+  \item \textbf{Walidacja ról i relacji} --- backend sprawdza poprawność roli użytkownika i istnienie przypisywanego trenera przed zapisem.
+\end{itemize}
+
+\subsection{Znane ograniczenia bezpieczeństwa}
+\label{sec:ograniczenia}
+
+Poniższe braki zostały zidentyfikowane i są zaplanowane do eliminacji w kolejnych wersjach:
+
+\begin{center}
+\begin{tabular}{clc}
+  \toprule
+  \textbf{Lp.} & \textbf{Opis} & \textbf{Priorytet} \\
+  \midrule
+  1 & Hasła przechowywane w bazie jako plaintext (brak BCrypt) & Wysoki \\
+  2 & Brak mechanizmu sesji / tokenów JWT & Wysoki \\
+  3 & Komunikacja HTTP zamiast HTTPS & Wysoki \\
+  4 & Brak blokady konta po wielokrotnych błędnych logowaniach & Średni \\
+  5 & Brak wygasania sesji & Średni \\
+  6 & Historia treningów nie synchronizowana z backendem & Niski \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Uwaga:} System w obecnej postaci przeznaczony jest wyłącznie do użytku w środowisku deweloperskim i akademickim. Przed wdrożeniem produkcyjnym wymagane jest usunięcie wszystkich wyżej wymienionych ograniczeń.
+
+% ============================================================
+\section{Polityka rozwoju oprogramowania}
+
+System oparty jest na technologiach aktywnie wspieranych przez producentów:
+\begin{itemize}
+  \item Flutter / Dart --- Google; wsparcie LTS dla kanałów stable,
+  \item Spring Boot 4.x --- VMware/Broadcom; wsparcie do co najmniej 2027,
+  \item MySQL 8.0 --- Oracle; wsparcie do 2026 (Extended Support do 2030),
+  \item Java 21 LTS --- wsparcie do 2029 (OpenJDK / Eclipse Temurin).
+\end{itemize}
+
+\textbf{Funkcje planowane w kolejnych wersjach:} szyfrowanie haseł (BCrypt), autentykacja JWT, HTTPS, synchronizacja historii Hive $\leftrightarrow$ backend, przegląd wideo sesji, moduł wiadomości trener--pacjent, obsługa kolejnych typów ćwiczeń w silniku detekcji pozy.
+
+% ============================================================
+\section{Spis dokumentów zewnętrznych}
+
+\begin{center}
+\begin{longtable}{lp{6cm}l}
+  \toprule
+  \textbf{Dokument} & \textbf{Opis} & \textbf{Źródło} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{Dokument} & \textbf{Opis} & \textbf{Źródło} \\
+  \midrule
+  \endhead
+  Spring Boot Docs       & Dokumentacja frameworka Spring Boot 4.x & docs.spring.io \\
+  Flutter Docs           & Dokumentacja SDK Flutter 3.x & docs.flutter.dev \\
+  ML Kit Pose Detection  & Dokumentacja Google ML Kit & developers.google.com \\
+  ExerciseDB API         & Dokumentacja zewnętrznego API ćwiczeń & rapidapi.com \\
+  Hive Docs              & Dokumentacja bazy Hive dla Flutter & docs.hivedb.dev \\
+  MySQL 8.0 Docs         & Dokumentacja MySQL Server 8.0 & dev.mysql.com \\
+  Docker Docs            & Dokumentacja Docker Engine & docs.docker.com \\
+  \bottomrule
+\end{longtable}
+\end{center}
+
+% ============================================================
+\appendix
+
+\section{Pełna struktura katalogów projektu}
+
+\dirtree{%
+  .1 rehab\_app/.
+  .2 frontend/.
+  .3 lib/.
+  .4 config/.
+  .4 core/.
+  .4 data/.
+  .5 models/.
+  .5 services/.
+  .4 ui/.
+  .5 screens/.
+  .6 coach/.
+  .7 coach\_main\_screen.dart.
+  .7 patient\_list\_screen.dart.
+  .7 patient\_detail\_screen.dart.
+  .7 plan\_editor\_screen.dart.
+  .7 video\_review\_screen.dart.
+  .6 camera\_screen.dart.
+  .6 catalog\_screen.dart.
+  .6 exercise\_detail\_screen.dart.
+  .6 login\_screen.dart.
+  .6 session\_summary\_screen.dart.
+  .6 workout\_history\_screen.dart.
+  .5 widgets/.
+  .4 vision/.
+  .3 pubspec.yaml.
+  .2 backend/.
+  .3 src/main/java/com/example/demo/.
+  .4 controllers/.
+  .4 entities/.
+  .4 repositories/.
+  .4 DataInitializer.java.
+}
+
+\section{Kody odpowiedzi HTTP}
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Kod} & \textbf{Znaczenie w kontekście API} \\
+  \midrule
+  200 OK          & Operacja zakończona sukcesem \\
+  201 Created     & Zasób utworzony (logowanie, zapis historii) \\
+  400 Bad Request & Nieprawidłowe dane wejściowe \\
+  403 Forbidden   & Nieprawidłowe hasło \\
+  409 Conflict    & Konflikt (e-mail już zajęty) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
