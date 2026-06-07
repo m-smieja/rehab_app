@@ -26,4 +26,8 @@ public class Users {
 
     @Column(name = "role", nullable = false)
     private String role;
+
+    @ManyToOne
+    @JoinColumn(name = "trainer_id")
+    private Users trainer;
 }
